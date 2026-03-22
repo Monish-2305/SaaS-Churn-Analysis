@@ -69,3 +69,18 @@ ROUND(COUNT (*) *100 / SUM (COUNT(*)) OVER(), 2) AS PERCENTAGE
 FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
 GROUP BY preceding_upgrade_flag
 
+--7. Reactivation Analysis
+--Reactivation Rate
+SELECT
+is_reactivation,
+COUNT (*) AS account_count,
+FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+GROUP BY is_reactivation
+
+--Reactivation by Reason
+select 
+reason_code,
+COUNT (CASE WHEN is_reactivation IS TRUE THEN 1 END) AS reactivated_accounts
+FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+GROUP BY reason_code
+ORDER By reactivated_accounts DESC
