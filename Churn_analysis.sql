@@ -48,7 +48,7 @@ ORDER BY churn_count DESC
 SELECT
 reason_code,
 ROUND (SUM(refund_amount_usd),2) AS refund_loss,
-FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+FROM ravenstack_churn_events
 GROUP BY reason_code
 ORDER BY refund_loss DESC
 
@@ -58,7 +58,7 @@ SELECT
 preceding_downgrade_flag,
 COUNT (*) AS churn_count,
 ROUND(COUNT (*) *100 / SUM (COUNT(*)) OVER(), 2) AS PERCENTAGE
-FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+FROM ravenstack_churn_events
 GROUP BY preceding_downgrade_flag
 
 --Percentage of People Ugraded before churn
@@ -66,7 +66,7 @@ SELECT
 preceding_upgrade_flag,
 COUNT (*) AS churn_count,
 ROUND(COUNT (*) *100 / SUM (COUNT(*)) OVER(), 2) AS PERCENTAGE
-FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+FROM ravenstack_churn_events
 GROUP BY preceding_upgrade_flag
 
 --7. Reactivation Analysis
@@ -74,13 +74,39 @@ GROUP BY preceding_upgrade_flag
 SELECT
 is_reactivation,
 COUNT (*) AS account_count,
-FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+FROM ravenstack_churn_events
 GROUP BY is_reactivation
 
 --Reactivation by Reason
 select 
 reason_code,
 COUNT (CASE WHEN is_reactivation IS TRUE THEN 1 END) AS reactivated_accounts
-FROM data-analytics-464302.Ravenstack_churnevents.Ravenstack_churn
+FROM ravenstack_churn_events
 GROUP BY reason_code
 ORDER By reactivated_accounts DESC
+
+--8. Downgrade and Reason correlation
+--Churn reasons + whether users downgraded before churning
+SELECT
+reason_code,
+preceding_downgrade_flag, 
+COUNT(*) AS churn_event
+FROM ravenstack_churn_events
+GROUP BY reason_code, preceding_downgrade_flag
+ORDER By reason_code
+
+--9. Feedback Text
+--Keyword Search (example: expensive)
+SELECT
+COUNT(*) AS churn_reason_as_expensive
+FROM ravenstack_churn_events
+WHERE Lower(feedback_text) LIKE '%expensive'
+   OR Lower(feedback_text) LIKE '%costly'
+
+--10. Accounts That Downgraded AND Requested High Refund
+SELECT *
+FROM ravenstack_churn_events
+WHERE preceding_downgrade_flag IS TRUE
+AND
+refund_amount_usd > (SELECT AVG(refund_amount_usd) FROM ravenstack_churn_events);
+
